@@ -1,3 +1,4 @@
+pub mod string;
 pub mod bits;
 pub mod collections;
 
