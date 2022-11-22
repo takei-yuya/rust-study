@@ -1,17 +1,82 @@
 pub mod naive_fid;
 pub use naive_fid::NaiveFID;
 
+/// Fully Indexable Dictionary
+/// rank操作およびselect操作が可能なビットベクトル
+///
+/// # Examples
+///
+/// ```
+/// use rust_study::bits::fid::*;
+/// let mut fid = NaiveFID::from_bool_vec(&vec![true, true, false, true, false, false, true, false]);
+/// assert_eq!(8, fid.len());
+///
+/// // get/set はビットベクトルの i番目(0-based)にアクセスをします
+/// assert_eq!(true, fid.get(3));
+/// fid.set(3, false);
+/// assert_eq!(false, fid.get(3));
+/// fid.set(3, true);
+///
+/// // rankN はビットベクトルの [0, i) の中の N の数を数えます。
+/// assert_eq!(1, fid.rank0(4));
+/// assert_eq!(3, fid.rank1(4));
+///
+/// // selectN は i番目(0-based)の N の位置を返します。
+/// assert_eq!(5, fid.select0(2));
+/// assert_eq!(3, fid.select1(2));
+/// ```
 pub trait FID {
+    /// 長さ `n` ですべてのビットが 0 のビットベクトルを作成します。
     fn new(n: usize) -> Self;
+
+    /// Booleanベクトル `vec` から新しいビットベクトルを作成します。
+    /// `false` は 0 、 `true` は 1 としてビットベクトルを構築します。
     fn from_bool_vec(vec: &Vec<bool>) -> Self;
+
+    /// ビットベクトルの `i` 番目(0-based)のビットにアクセスします。
+    ///
+    /// # Panics
+    ///
+    /// `i` が境界の外にあるときパニックします。
     fn get(&self, i: usize) -> bool;
+
+    /// ビットベクトルの `i` 番目(0-based)のビットを変更します。
+    /// `bit` が `false` のとき 0 、 `true` のときは 1 として変更します。
+    ///
+    /// # Panics
+    ///
+    /// `i` が境界の外にあるときパニックします。
     fn set(&mut self, i: usize, bit: bool) -> ();
+
+    /// ビットベクトルの長さを返します。
     fn len(&self) -> usize;
+
+    /// ビットベクトルの `i` 番目(0-based)のビットにアクセスします。
+    /// `get` と同じです。
+    ///
+    /// # Panics
+    ///
+    /// `i` が境界の外にあるときパニックします。
     fn access(&self, i: usize) -> bool;
+
+    /// ビットベクトルの [0, `i`) の中の `0` の個数を数えます。
+    ///
+    /// # Panics
+    ///
+    /// `i` が境界の外にあるときパニックします。
     fn rank0(&self, i: usize) -> usize {
         i - self.rank1(i)
     }
+
+    /// ビットベクトルの [0, `i`) の中の `1` の個数を数えます。
+    ///
+    /// # Panics
+    ///
+    /// `i` が境界の外にあるときパニックします。
     fn rank1(&self, i: usize) -> usize;
+
+    /// `i` 番目(0-based)の `0` の位置を返します。
+    /// `0` の個数が `i` 以上の場合、ビットベクトルの長さを返します。
     fn select0(&self, i: usize) -> usize {
         let mut beg = 0;
         let mut end = self.len();
@@ -31,6 +96,9 @@ pub trait FID {
             }
         }
     }
+
+    /// `i` 番目(0-based)の `1` の位置を返します。
+    /// `1` の個数が `i` 以上の場合、ビットベクトルの長さを返します。
     fn select1(&self, i: usize) -> usize {
         let mut beg = 0;
         let mut end = self.len();
