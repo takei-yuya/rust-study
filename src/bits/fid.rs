@@ -2,6 +2,7 @@ pub mod naive_fid;
 pub use naive_fid::NaiveFID;
 
 /// Fully Indexable Dictionary
+///
 /// rank操作およびselect操作が可能なビットベクトル
 ///
 /// # Examples
@@ -26,57 +27,99 @@ pub use naive_fid::NaiveFID;
 /// assert_eq!(3, fid.select1(2));
 /// ```
 pub trait FID {
-    /// 長さ `n` ですべてのビットが 0 のビットベクトルを作成します。
+    /// 長さ `n` ですべてのビットが `0` のビットベクトルを作成します。
     fn new(n: usize) -> Self;
 
     /// Booleanベクトル `vec` から新しいビットベクトルを作成します。
-    /// `false` は 0 、 `true` は 1 としてビットベクトルを構築します。
+    ///
+    /// `false` は `0` 、 `true` は `1` としてビットベクトルを構築します。
     fn from_bool_vec(vec: &Vec<bool>) -> Self;
 
     /// ビットベクトルの `i` 番目(0-based)のビットにアクセスします。
     ///
     /// # Panics
     ///
-    /// `i` が境界の外にあるときパニックします。
+    /// Panics if `i` is out of bounds. `i` should be in `[0, len)`
     fn get(&self, i: usize) -> bool;
 
     /// ビットベクトルの `i` 番目(0-based)のビットを変更します。
+    ///
     /// `bit` が `false` のとき 0 、 `true` のときは 1 として変更します。
     ///
     /// # Panics
     ///
-    /// `i` が境界の外にあるときパニックします。
+    /// Panics if `i` is out of bounds. `i` should be in `[0, len)`
     fn set(&mut self, i: usize, bit: bool) -> ();
 
     /// ビットベクトルの長さを返します。
     fn len(&self) -> usize;
 
     /// ビットベクトルの `i` 番目(0-based)のビットにアクセスします。
-    /// `get` と同じです。
+    /// [`Self::get()`] と同じです。
     ///
     /// # Panics
     ///
-    /// `i` が境界の外にあるときパニックします。
+    /// Panics if `i` is out of bounds. `i` should be in `[0, len)`
     fn access(&self, i: usize) -> bool;
 
     /// ビットベクトルの [0, `i`) の中の `0` の個数を数えます。
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rust_study::bits::fid::*;
+    /// let mut fid = NaiveFID::from_bool_vec(
+    ///     &vec![true, true, false, true, false, false, true, false]
+    /// );
+    /// assert_eq!(
+    ///     vec![0, 0, 0, 1, 1, 2, 3, 3, 4],
+    ///     (0..=fid.len()).map(|i| fid.rank0(i)).collect::<Vec<usize>>()
+    /// );
+    /// ```
+    ///
     /// # Panics
     ///
-    /// `i` が境界の外にあるときパニックします。
+    /// Panics if `i` is out of bounds. `i` should be in `[0, len]`
     fn rank0(&self, i: usize) -> usize {
         i - self.rank1(i)
     }
 
     /// ビットベクトルの [0, `i`) の中の `1` の個数を数えます。
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rust_study::bits::fid::*;
+    /// let mut fid = NaiveFID::from_bool_vec(
+    ///     &vec![true, true, false, true, false, false, true, false]
+    /// );
+    /// assert_eq!(
+    ///     vec![0, 1, 2, 2, 3, 3, 3, 4, 4],
+    ///     (0..=fid.len()).map(|i| fid.rank1(i)).collect::<Vec<usize>>()
+    /// );
+    /// ```
+    ///
     /// # Panics
     ///
-    /// `i` が境界の外にあるときパニックします。
+    /// Panics if `i` is out of bounds. `i` should be in `[0, len]`
     fn rank1(&self, i: usize) -> usize;
 
     /// `i` 番目(0-based)の `0` の位置を返します。
+    ///
     /// `0` の個数が `i` 以上の場合、ビットベクトルの長さを返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rust_study::bits::fid::*;
+    /// let mut fid = NaiveFID::from_bool_vec(
+    ///     &vec![true, true, false, true, false, false, true, false]
+    /// );
+    /// assert_eq!(
+    ///     vec![2, 4, 5, 7, 8],
+    ///     (0..=fid.rank0(fid.len())).map(|i| fid.select0(i)).collect::<Vec<usize>>()
+    /// );
+    /// ```
     fn select0(&self, i: usize) -> usize {
         let mut beg = 0;
         let mut end = self.len();
@@ -98,7 +141,21 @@ pub trait FID {
     }
 
     /// `i` 番目(0-based)の `1` の位置を返します。
+    ///
     /// `1` の個数が `i` 以上の場合、ビットベクトルの長さを返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rust_study::bits::fid::*;
+    /// let mut fid = NaiveFID::from_bool_vec(
+    ///     &vec![true, true, false, true, false, false, true, false]
+    /// );
+    /// assert_eq!(
+    ///     vec![0, 1, 3, 6, 8],
+    ///     (0..=fid.rank0(fid.len())).map(|i| fid.select1(i)).collect::<Vec<usize>>()
+    /// );
+    /// ```
     fn select1(&self, i: usize) -> usize {
         let mut beg = 0;
         let mut end = self.len();
@@ -172,10 +229,7 @@ mod tests {
         let mut rng = rand::thread_rng();
         let len = 1000;
 
-        let mut bv = vec![false; len];
-        for i in 0..len {
-            bv[i] = rng.gen();
-        }
+        let mut bv = (0..len).map(|_| rng.gen() ).collect();
         let mut fid = T::from_bool_vec(&bv);
         // check if set/unset updates offsets correclty
         for i in 0..len {
@@ -202,10 +256,7 @@ mod tests {
         let len = 1000;
         let mut rng = rand::thread_rng();
 
-        let mut bv = vec![false; len];
-        for i in 0..len {
-            bv[i] = rng.gen();
-        }
+        let mut bv = (0..len).map(|_| rng.gen() ).collect();
         let mut fid = T::from_bool_vec(&bv);
         // check if set/unset updates offsets correclty
         for i in 0..len {
@@ -233,13 +284,8 @@ mod tests {
     fn not<T: FID + PartialEq + Debug + Not<Output=T>>() {
         let len = 1000;
         let mut rng = rand::thread_rng();
-        let mut actual_vec = vec![false;len];
-        let mut expected_vec = vec![false;len];
-
-        for i in 0..len {
-            actual_vec[i] = rng.gen();
-            expected_vec[i] = !actual_vec[i];
-        }
+        let actual_vec: Vec<bool> = (0..len).map(|_| rng.gen() ).collect();
+        let expected_vec: Vec<bool> = actual_vec.iter().map(|b| !b ).collect();
 
         let bv = T::from_bool_vec(&actual_vec);
         let expected = T::from_bool_vec(&expected_vec);
