@@ -141,8 +141,10 @@ impl <T: FID> U8WaveletMatrix<T> {
         );
 
         heap.push(TopKItem::new(s, e, 0, 0));
-        while result.len() < k && !heap.is_empty() {
-            let q = heap.pop();
+        while let Some(q) = heap.pop() {
+            if result.len() >= k {
+                break;
+            }
             if q.d >= self.matrix.len() {
                 result.push((q.v, q.e - q.s));
                 continue;
