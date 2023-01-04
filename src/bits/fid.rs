@@ -62,7 +62,7 @@ pub trait FID {
     /// Panics if `i` is out of bounds. `i` should be in `[0, len)`
     fn access(&self, i: usize) -> bool;
 
-    /// ビットベクトルの [0, `i`) の中の `0` の個数を数えます。
+    /// ビットベクトルの `[0, i)` の中の `0` の個数を数えます。
     ///
     /// # Examples
     ///
@@ -84,7 +84,7 @@ pub trait FID {
         i - self.rank1(i)
     }
 
-    /// ビットベクトルの [0, `i`) の中の `1` の個数を数えます。
+    /// ビットベクトルの `[0, i)` の中の `1` の個数を数えます。
     ///
     /// # Examples
     ///
